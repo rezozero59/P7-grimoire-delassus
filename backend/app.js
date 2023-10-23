@@ -2,6 +2,10 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 
+const authRoutes = require("./authRoutes");
+
+app.use(authRoutes);
+
 app.use(cors());
 
 app.use((req, res, next) => {
@@ -20,7 +24,5 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to my app!" });
 });
-
-
 
 module.exports = app;
