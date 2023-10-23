@@ -2,8 +2,10 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 
-const authRoutes = require("./authRoutes");
+const authRoutes = require("./routes/auth");
+const bookRoutes = require("./routes/books");
 
+app.use(bookRoutes);
 app.use(authRoutes);
 
 app.use(cors());
