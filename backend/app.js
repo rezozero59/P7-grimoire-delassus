@@ -3,36 +3,38 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
-const cors = require("cors");
+
 const multer = require("multer");
 
 const authRoutes = require("./routes/auth");
-const bookRoutes = require("./routes/books");
+// const bookRoutes = require("./routes/books");
 
-const storage = multer.diskStorage({
-  destination: (req, file, callback) => {
-    callback(null, "uploads/");
-  },
-  filename: (req, file, callback) => {
-    callback(null, Date.now() + "-" + file.originalname);
-  },
-});
+// const storage = multer.diskStorage({
+//   destination: (req, file, callback) => {
+//     callback(null, "uploads/");
+//   },
+//   filename: (req, file, callback) => {
+//     callback(null, Date.now() + "-" + file.originalname);
+//   },
+// });
 
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
 
 mongoose
   .connect(
     `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@grimoire.cafkgzn.mongodb.net/?retryWrites=true&w=majority`,
     { useNewUrlParser: true, useUnifiedTopology: true }
   )
-
   .then(() => console.log("Connexion à MongoDB réussie !"))
   .catch(() => console.log("Connexion à MongoDB échouée !"));
 
-app.use(bookRoutes);
-app.use(authRoutes);
+// app.use(bookRoutes);
+// app.use(authRoutes);
 
-app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use("/api/auth", authRoutes);
+// app.use("/api/books", bookRoutes);
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -45,10 +47,6 @@ app.use((req, res, next) => {
     "GET, POST, PUT, DELETE, PATCH, OPTIONS"
   );
   next();
-});
-
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to my app!" });
 });
 
 module.exports = app;
