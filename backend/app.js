@@ -1,9 +1,31 @@
 const express = require("express");
 const app = express();
+const mongoose = require("mongoose");
 const cors = require("cors");
+const multer = require("multer");
 
 const authRoutes = require("./routes/auth");
 const bookRoutes = require("./routes/books");
+
+const storage = multer.diskStorage({
+  destination: (req, file, callback) => {
+    callback(null, "uploads/");
+  },
+  filename: (req, file, callback) => {
+    callback(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
+
+mongoose
+  .connect(
+    "mongodb+srv://rezozero:<password>@grimoire.cafkgzn.mongodb.net/?retryWrites=true&w=majority",
+    { useNewUrlParser: true, useUnifiedTopology: true }
+  )
+
+  .then(() => console.log("Connexion à MongoDB réussie !"))
+  .catch(() => console.log("Connexion à MongoDB échouée !"));
 
 app.use(bookRoutes);
 app.use(authRoutes);

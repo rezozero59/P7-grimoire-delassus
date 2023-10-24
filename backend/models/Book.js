@@ -47,6 +47,12 @@ const bookSchema = new mongoose.Schema({
     type: Number,
     default: 0, // La valeur par défaut
   },
+  ratings: [
+    {
+      userId: String,
+      grade: Number,
+    },
+  ],
 });
 
 module.exports = mongoose.model("Book", bookSchema);
