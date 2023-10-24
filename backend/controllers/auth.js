@@ -9,7 +9,7 @@ exports.createUser = async (req, res) => {
     // Vérifie si l'utilisateur existe déjà
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already registered" });
+      return res.status(400).json({ message: "Email déjà utilisé" });
     }
 
     // Hachage du mot de passe
@@ -39,7 +39,7 @@ exports.loginUser = async (req, res) => {
     if (!user) {
       return res
         .status(401)
-        .json({ message: "Email or password is incorrect" });
+        .json({ message: "Email ou mot de passe incorrect" });
     }
 
     // Vérifier le mot de passe
@@ -53,7 +53,7 @@ exports.loginUser = async (req, res) => {
     // Créer un token JWT
     const token = jwt.sign(
       { userId: user._id },
-      "YOUR_SECRET_KEY", // Remplacer par une clé secrète robuste
+      "RANDOM_TOKEN_SECRET", // Remplacer par une clé secrète robuste
       { expiresIn: "24h" }
     );
 

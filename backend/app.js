@@ -2,23 +2,10 @@ require("dotenv").config();
 
 const express = require("express");
 const app = express();
+const path = require("path");
 const mongoose = require("mongoose");
-
-const multer = require("multer");
-
 const authRoutes = require("./routes/auth");
-// const bookRoutes = require("./routes/books");
-
-// const storage = multer.diskStorage({
-//   destination: (req, file, callback) => {
-//     callback(null, "uploads/");
-//   },
-//   filename: (req, file, callback) => {
-//     callback(null, Date.now() + "-" + file.originalname);
-//   },
-// });
-
-// const upload = multer({ storage: storage });
+const bookRoutes = require("./routes/books");
 
 mongoose
   .connect(
@@ -28,13 +15,8 @@ mongoose
   .then(() => console.log("Connexion à MongoDB réussie !"))
   .catch(() => console.log("Connexion à MongoDB échouée !"));
 
-// app.use(bookRoutes);
-// app.use(authRoutes);
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use("/api/auth", authRoutes);
-// app.use("/api/books", bookRoutes);
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -48,5 +30,10 @@ app.use((req, res, next) => {
   );
   next();
 });
+
+app.use("/images", express.static(path.join(__dirname, "images")));
+
+app.use("/api/auth", authRoutes);
+app.use("/api/books", bookRoutes);
 
 module.exports = app;
