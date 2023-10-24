@@ -108,38 +108,57 @@ exports.readBookRating = async (req, res) => {
   }
 };
 
-exports.updateBook = async (req, res) => {
-  try {
-    let updatedBookData;
-    if (req.file) {
-      // Si une image est fournie
-      const imageUrl = "/images/" + req.file.filename;
-      updatedBookData = JSON.parse(req.body.book);
-      updatedBookData.imageUrl = imageUrl; // Mettez à jour l'URL de l'image
-    } else {
-      // Si aucune image n'est fournie
-      updatedBookData = req.body;
-    }
+exports.updateBook = (req, res) => {
+  const bookObject = req.file
+    ? {
+        ...JSON.parse(req.body.book),
+        imageUrl: `${req.protocol}://${req.get("host")}/images/${
+          req.file.filename
+        }`,
+      }
+    : { ...req.body };
 
-    // Mettre à jour le livre dans la base de données
-    const updatedBook = await Book.findByIdAndUpdate(
-      req.params.id,
-      { $set: updatedBookData },
-      { new: true }
-    );
+  delete bookObject._userId;
 
-    if (!updatedBook) {
-      return res.status(404).json({ message: "Book not found" });
-    }
+  Book.findOne({ _id: req.params.id })
+    .then((book) => {
+      if (book.userId != req.user.userId) {
+        return res.status(401).json({ message: "Not authorized" });
+      }
 
-    res.status(200).json({ message: "Book successfully updated" });
-  } catch (error) {
-    if (error.kind === "ObjectId") {
-      // Vérifie si l'erreur est due à un _id non valide
-      return res.status(400).json({ message: "Invalid book ID" });
-    }
-    res.status(500).json({ message: "Server error" });
-  }
+      // Si une note est fournie dans la requête
+      if (req.body.rating) {
+        let userRating = book.ratings.find((r) => r.userId === req.user.userId);
+        if (userRating) {
+          userRating.grade = req.body.rating;
+        } else {
+          book.ratings.push({
+            userId: req.user.userId,
+            grade: req.body.rating,
+          });
+        }
+
+        // Mettez à jour la note moyenne
+        const totalRating = book.ratings.reduce((acc, r) => acc + r.grade, 0);
+        book.averageRating = totalRating / book.ratings.length;
+      }
+
+      return Book.updateOne(
+        { _id: req.params.id },
+        {
+          ...bookObject,
+          ratings: book.ratings,
+          averageRating: book.averageRating,
+        }
+      );
+    })
+    .then(() => res.status(200).json({ message: "Book successfully updated!" }))
+    .catch((error) => {
+      if (error.kind === "ObjectId") {
+        return res.status(400).json({ message: "Invalid book ID" });
+      }
+      res.status(500).json({ message: "Server error" });
+    });
 };
 
 exports.deleteBook = async (req, res) => {
