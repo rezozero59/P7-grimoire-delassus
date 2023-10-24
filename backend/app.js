@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
@@ -20,7 +22,7 @@ const upload = multer({ storage: storage });
 
 mongoose
   .connect(
-    "mongodb+srv://rezozero:<password>@grimoire.cafkgzn.mongodb.net/?retryWrites=true&w=majority",
+    `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@grimoire.cafkgzn.mongodb.net/?retryWrites=true&w=majority`,
     { useNewUrlParser: true, useUnifiedTopology: true }
   )
 
