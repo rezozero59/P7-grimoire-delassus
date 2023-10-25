@@ -27,7 +27,7 @@ exports.createBook = async (req, res) => {
 
 exports.createRating = async (req, res) => {
   try {
-    const book = await Book.findById(req.params.id);
+    const book = await Book.findOne({ _id: req.params.id });
 
     if (!book) {
       return res.status(404).json({ message: "Book not found" });
@@ -35,14 +35,14 @@ exports.createRating = async (req, res) => {
 
     const { userId, rating } = req.body;
 
-    // Vérifiez si la note est valide
+    // Vérifie si la note est valide
     if (rating < 0 || rating > 5) {
       return res
         .status(400)
         .json({ message: "La note doit être entre 0 and 5" });
     }
 
-    // Vérifiez si l'utilisateur a déjà noté ce livre
+    // Vérifie si l'utilisateur a déjà noté ce livre
     const userRating = book.ratings.find((r) => r.userId === userId);
     if (userRating) {
       return res
@@ -108,7 +108,7 @@ exports.readBookRating = async (req, res) => {
   }
 };
 
-exports.updateBook = (req, res) => {
+exports.updateBook = async (req, res) => {
   const bookObject = req.file
     ? {
         ...JSON.parse(req.body.book),
@@ -120,53 +120,47 @@ exports.updateBook = (req, res) => {
 
   delete bookObject._userId;
 
-  Book.findOne({ _id: req.params.id })
-    .then((book) => {
-      if (book.userId != req.user.userId) {
-        return res.status(401).json({ message: "Not authorized" });
-      }
+  try {
+    let book = await Book.findOne({ _id: req.params.id });
 
-      // Si une note est fournie dans la requête
-      if (req.body.rating) {
-        let userRating = book.ratings.find((r) => r.userId === req.user.userId);
-        if (userRating) {
-          userRating.grade = req.body.rating;
-        } else {
-          book.ratings.push({
-            userId: req.user.userId,
-            grade: req.body.rating,
-          });
-        }
+    if (!book) {
+      return res.status(404).json({ message: "Book not found" });
+    }
 
-        // Mettez à jour la note moyenne
-        const totalRating = book.ratings.reduce((acc, r) => acc + r.grade, 0);
-        book.averageRating = totalRating / book.ratings.length;
-      }
+    if (book.userId != req.user.userId) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
 
-      return Book.updateOne(
-        { _id: req.params.id },
-        {
-          ...bookObject,
-          ratings: book.ratings,
-          averageRating: book.averageRating,
-        }
-      );
-    })
-    .then(() => res.status(200).json({ message: "Book successfully updated!" }))
-    .catch((error) => {
-      if (error.kind === "ObjectId") {
-        return res.status(400).json({ message: "Invalid book ID" });
+    // Mise à jour des autres données du livre
+    for (let key in bookObject) {
+      if (bookObject.hasOwnProperty(key)) {
+        book[key] = bookObject[key];
       }
+    }
+
+    await book.save();
+
+    res.status(200).json({ message: "Book successfully updated" });
+  } catch (error) {
+    if (error.kind === "ObjectId") {
+      res.status(400).json({ message: "Invalid book ID" });
+    } else {
       res.status(500).json({ message: "Server error" });
-    });
+    }
+  }
 };
 
 exports.deleteBook = async (req, res) => {
   try {
-    const book = await Book.findById(req.params.id);
+    const book = await Book.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.userId,
+    });
 
     if (!book) {
-      return res.status(404).json({ message: "Book not found" });
+      return res
+        .status(404)
+        .json({ message: "Book not found or user not authorized to delete" });
     }
 
     // Supprimez l'image associée du serveur
@@ -179,13 +173,9 @@ exports.deleteBook = async (req, res) => {
       });
     }
 
-    // Supprime le livre de la base de données
-    await Book.findByIdAndDelete(req.params.id);
-
     res.status(200).json({ message: "Book successfully deleted" });
   } catch (error) {
     if (error.kind === "ObjectId") {
-      // Vérifie si l'erreur est due à un _id non valide
       return res.status(400).json({ message: "Invalid book ID" });
     }
     res.status(500).json({ message: "Server error" });
