@@ -10,7 +10,9 @@ const sharpMiddleware = (req, res, next) => {
   const filePath = req.file.path;
 
   sharp(filePath)
-    .resize(800, 600) // Exemple de redimensionnement
+    .resize(800, 600, {
+      fit: "cover",
+    }) // Exemple de redimensionnement
     .toBuffer()
     .then((data) => {
       // Réécriture de l'image originale par l'image traitée
