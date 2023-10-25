@@ -150,34 +150,23 @@ exports.updateBook = async (req, res) => {
   }
 };
 
-exports.deleteBook = async (req, res) => {
-  try {
-    const book = await Book.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user.userId,
+exports.deleteBook = (req, res) => {
+  Book.findOne({ _id: req.params.id })
+    .then((book) => {
+      if (book.userId != req.user.userId) {
+        res.status(401).json({ message: "Accès non autorisé" });
+      } else {
+        const filename = book.imageUrl.split("/images/")[1];
+        fs.unlink(`images/${filename}`, () => {
+          Book.deleteOne({ _id: req.params.id })
+            .then(() => {
+              res.status(200).json({ message: "Livre supprimé !" });
+            })
+            .catch((error) => res.status(401).json({ error }));
+        });
+      }
+    })
+    .catch((error) => {
+      res.status(500).json({ error });
     });
-
-    if (!book) {
-      return res
-        .status(404)
-        .json({ message: "Book not found or user not authorized to delete" });
-    }
-
-    // Supprimez l'image associée du serveur
-    if (book.imageUrl) {
-      const imagePath = path.join(__dirname, "..", book.imageUrl);
-      fs.unlink(imagePath, (err) => {
-        if (err) {
-          console.error("Error deleting the image:", err);
-        }
-      });
-    }
-
-    res.status(200).json({ message: "Book successfully deleted" });
-  } catch (error) {
-    if (error.kind === "ObjectId") {
-      return res.status(400).json({ message: "Invalid book ID" });
-    }
-    res.status(500).json({ message: "Server error" });
-  }
 };
