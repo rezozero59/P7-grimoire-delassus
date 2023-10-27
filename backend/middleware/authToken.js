@@ -9,7 +9,7 @@ module.exports = (req, res, next) => {
     const decodedToken = jwt.verify(token, "RANDOM_TOKEN_SECRET"); // Utilise la même clé secrète que lors de la signature du token
     req.user = { userId: decodedToken.userId }; // Stocker l'ID de l'utilisateur dans la requête pour un accès ultérieur
 
-    next(); // Passe au prochain middleware ou à la fonction de route
+    next();
   } catch {
     res.status(401).json({ message: "Invalid or expired token" });
   }

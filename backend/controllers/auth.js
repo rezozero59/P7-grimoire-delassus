@@ -24,7 +24,7 @@ exports.createUser = async (req, res) => {
     // Sauvegarde de l'utilisateur dans la base de données
     await user.save();
 
-    res.status(201).json({ message: "User successfully registered" });
+    res.status(201).json({ message: "Utilisateur enregistré avec succès" });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -34,7 +34,7 @@ exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Trouver l'utilisateur par e-mail
+    // Trouve l'utilisateur par e-mail
     const user = await User.findOne({ email });
     if (!user) {
       return res
@@ -42,7 +42,7 @@ exports.loginUser = async (req, res) => {
         .json({ message: "Email ou mot de passe incorrect" });
     }
 
-    // Vérifier le mot de passe
+    // Vérifie le mot de passe
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res
@@ -50,7 +50,7 @@ exports.loginUser = async (req, res) => {
         .json({ message: "Email ou mot de passe incorrect" });
     }
 
-    // Créer un token JWT
+    // Crée un token JWT
     const token = jwt.sign(
       { userId: user._id },
       "RANDOM_TOKEN_SECRET", // Remplacer par une clé secrète robuste

@@ -21,7 +21,7 @@ exports.createBook = async (req, res) => {
 
     res.status(201).json({ message: "Book successfully added" });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -35,7 +35,7 @@ exports.createRating = async (req, res) => {
 
     const { userId, rating } = req.body;
 
-    // Vérifie si la note est valide
+    // Vérifie si la note est valide (géré par le front-end normalement)
     if (rating < 0 || rating > 5) {
       return res
         .status(400)
@@ -50,24 +50,24 @@ exports.createRating = async (req, res) => {
         .json({ message: "User has already rated this book" });
     }
 
-    // Ajoutez la note de l'utilisateur
+    // Ajoute la note de l'utilisateur
     book.ratings.push({ userId, grade: rating });
 
-    // Mettez à jour la note moyenne
+    // Met à jour la note moyenne
     const totalRating = book.ratings.reduce((acc, r) => acc + r.grade, 0);
     book.averageRating = totalRating / book.ratings.length;
 
-    // Sauvegardez les modifications dans la base de données
+    // Sauvegarde les modifications dans la base de données
     await book.save();
 
-    // Renvoyez le livre mis à jour en réponse
+    // Renvoie le livre mis à jour en réponse
     res.status(200).json(book);
   } catch (error) {
+    console.error("Error creating rating:", error); // Journalisation de l'erreur
     if (error.kind === "ObjectId") {
-      // Vérifie si l'erreur est due à un _id non valide
-      return res.status(400).json({ message: "Invalid book ID" });
+      return res.status(400).json({ message: "Invalid book ID for rating." });
     }
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -76,7 +76,7 @@ exports.readBookList = async (req, res) => {
     const books = await Book.find(); // Récupère tous les livres de la base de données
     res.status(200).json(books);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -92,7 +92,7 @@ exports.readBook = async (req, res) => {
       // Vérifie si l'erreur est due à un _id non valide
       return res.status(400).json({ message: "Invalid book ID" });
     }
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -104,7 +104,7 @@ exports.readBookRating = async (req, res) => {
 
     res.status(200).json(books);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -143,9 +143,9 @@ exports.updateBook = async (req, res) => {
     res.status(200).json({ message: "Book successfully updated" });
   } catch (error) {
     if (error.kind === "ObjectId") {
-      res.status(400).json({ message: "Invalid book ID" });
+      res.status(400).json({ error: error.message });
     } else {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ error: error.message });
     }
   }
 };
@@ -154,19 +154,22 @@ exports.deleteBook = (req, res) => {
   Book.findOne({ _id: req.params.id })
     .then((book) => {
       if (book.userId != req.user.userId) {
-        res.status(401).json({ message: "Accès non autorisé" });
-      } else {
-        const filename = book.imageUrl.split("/images/")[1];
-        fs.unlink(`images/${filename}`, () => {
-          Book.deleteOne({ _id: req.params.id })
-            .then(() => {
-              res.status(200).json({ message: "Livre supprimé !" });
-            })
-            .catch((error) => res.status(401).json({ error }));
-        });
+        return res.status(401).json({ message: "Accès non autorisé" });
       }
+
+      const filename = book.imageUrl.split("/images/")[1];
+      fs.unlink(`images/${filename}`, (unlinkError) => {
+        if (unlinkError) {
+          return res.status(500).json({ error: unlinkError.message });
+        }
+        Book.deleteOne({ _id: req.params.id })
+          .then(() => res.status(200).json({ message: "Livre supprimé !" }))
+          .catch((deleteError) =>
+            res.status(500).json({ error: deleteError.message })
+          );
+      });
     })
-    .catch((error) => {
-      res.status(500).json({ error });
+    .catch((findError) => {
+      res.status(500).json({ error: findError.message });
     });
 };

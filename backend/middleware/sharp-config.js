@@ -2,15 +2,14 @@ const sharp = require("sharp");
 const fs = require("fs");
 
 const sharpMiddleware = (req, res, next) => {
-  // Vérifiez si un fichier a été téléchargé
   if (!req.file) {
-    return next(); // Si aucun fichier, passez au middleware/route suivant(e)
+    return next();
   }
 
   const filePath = req.file.path;
 
   sharp(filePath)
-    .resize(800, 600, {
+    .resize(600, 800, {
       fit: "cover",
     }) // Exemple de redimensionnement
     .toBuffer()
