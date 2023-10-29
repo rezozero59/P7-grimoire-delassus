@@ -109,17 +109,6 @@ exports.readBookRating = async (req, res) => {
 };
 
 exports.updateBook = async (req, res) => {
-  const bookObject = req.file
-    ? {
-        ...JSON.parse(req.body.book),
-        imageUrl: `${req.protocol}://${req.get("host")}/images/${
-          req.file.filename
-        }`,
-      }
-    : { ...req.body };
-
-  delete bookObject._userId;
-
   try {
     let book = await Book.findOne({ _id: req.params.id });
 
@@ -131,7 +120,25 @@ exports.updateBook = async (req, res) => {
       return res.status(401).json({ message: "Not authorized" });
     }
 
+    if (req.file) {
+      // Supprimer l'ancienne image si une nouvelle image est téléchargée
+      const oldFilename = book.imageUrl.split("/images/")[1];
+      fs.unlink(`images/${oldFilename}`, (unlinkError) => {
+        if (unlinkError) {
+          console.error("Error deleting old image:", unlinkError);
+        }
+      });
+
+      // Mise à jour de l'URL de l'image avec la nouvelle image
+      book.imageUrl = `${req.protocol}://${req.get("host")}/images/${
+        req.file.filename
+      }`;
+    }
+
     // Mise à jour des autres données du livre
+    const bookObject = req.file ? JSON.parse(req.body.book) : req.body;
+    delete bookObject._userId; // Assurez-vous de supprimer les champs non nécessaires
+
     for (let key in bookObject) {
       if (bookObject.hasOwnProperty(key)) {
         book[key] = bookObject[key];
@@ -139,7 +146,6 @@ exports.updateBook = async (req, res) => {
     }
 
     await book.save();
-
     res.status(200).json({ message: "Book successfully updated" });
   } catch (error) {
     if (error.kind === "ObjectId") {
