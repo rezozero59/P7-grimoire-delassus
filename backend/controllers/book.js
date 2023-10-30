@@ -19,7 +19,7 @@ exports.createBook = async (req, res) => {
 
     await book.save();
 
-    res.status(201).json({ message: "Book successfully added" });
+    res.status(201).json({ message: "Livre ajouté avec succès" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -30,12 +30,12 @@ exports.createRating = async (req, res) => {
     const book = await Book.findOne({ _id: req.params.id });
 
     if (!book) {
-      return res.status(404).json({ message: "Book not found" });
+      return res.status(404).json({ error: error.message });
     }
 
     const { userId, rating } = req.body;
 
-    // Vérifie si la note est valide (géré par le front-end normalement)
+    // Vérifie si la note est valide
     if (rating < 0 || rating > 5) {
       return res
         .status(400)
@@ -47,7 +47,7 @@ exports.createRating = async (req, res) => {
     if (userRating) {
       return res
         .status(400)
-        .json({ message: "User has already rated this book" });
+        .json({ message: "Livre déjà noté par l'utilisateur" });
     }
 
     // Ajoute la note de l'utilisateur
@@ -55,7 +55,9 @@ exports.createRating = async (req, res) => {
 
     // Met à jour la note moyenne
     const totalRating = book.ratings.reduce((acc, r) => acc + r.grade, 0);
-    book.averageRating = totalRating / book.ratings.length;
+    book.averageRating = parseFloat(
+      (totalRating / book.ratings.length).toFixed(1)
+    );
 
     // Sauvegarde les modifications dans la base de données
     await book.save();
@@ -63,9 +65,8 @@ exports.createRating = async (req, res) => {
     // Renvoie le livre mis à jour en réponse
     res.status(200).json(book);
   } catch (error) {
-    console.error("Error creating rating:", error); // Journalisation de l'erreur
     if (error.kind === "ObjectId") {
-      return res.status(400).json({ message: "Invalid book ID for rating." });
+      return res.status(400).json({ error: error.message });
     }
     res.status(500).json({ error: error.message });
   }
@@ -113,11 +114,11 @@ exports.updateBook = async (req, res) => {
     let book = await Book.findOne({ _id: req.params.id });
 
     if (!book) {
-      return res.status(404).json({ message: "Book not found" });
+      return res.status(404).json({ error: error.message });
     }
 
     if (book.userId != req.user.userId) {
-      return res.status(401).json({ message: "Not authorized" });
+      return res.status(403).json({ error: error.message });
     }
 
     if (req.file) {
@@ -125,7 +126,7 @@ exports.updateBook = async (req, res) => {
       const oldFilename = book.imageUrl.split("/images/")[1];
       fs.unlink(`images/${oldFilename}`, (unlinkError) => {
         if (unlinkError) {
-          console.error("Error deleting old image:", unlinkError);
+          console.error(unlinkError);
         }
       });
 
@@ -146,7 +147,7 @@ exports.updateBook = async (req, res) => {
     }
 
     await book.save();
-    res.status(200).json({ message: "Book successfully updated" });
+    res.status(200).json({ message: "Livre modifié avec succès" });
   } catch (error) {
     if (error.kind === "ObjectId") {
       res.status(400).json({ error: error.message });
@@ -160,7 +161,7 @@ exports.deleteBook = (req, res) => {
   Book.findOne({ _id: req.params.id })
     .then((book) => {
       if (book.userId != req.user.userId) {
-        return res.status(401).json({ message: "Accès non autorisé" });
+        return res.status(403).json({ error: error.message });
       }
 
       const filename = book.imageUrl.split("/images/")[1];

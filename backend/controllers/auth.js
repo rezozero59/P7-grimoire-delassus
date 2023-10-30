@@ -37,17 +37,13 @@ exports.loginUser = async (req, res) => {
     // Trouve l'utilisateur par e-mail
     const user = await User.findOne({ email });
     if (!user) {
-      return res
-        .status(401)
-        .json({ message: "Email ou mot de passe incorrect" });
+      return res.status(401).json({ error: error.message });
     }
 
     // Vérifie le mot de passe
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      return res
-        .status(401)
-        .json({ message: "Email ou mot de passe incorrect" });
+      return res.status(401).json({ error: error.message });
     }
 
     // Crée un token JWT
@@ -59,6 +55,6 @@ exports.loginUser = async (req, res) => {
 
     res.status(200).json({ userId: user._id, token });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ error: error.message });
   }
 };

@@ -8,10 +8,12 @@ const sharpMiddleware = (req, res, next) => {
   }
 
   const filePath = req.file.path;
-  const outputFilePath = path.join(
-    path.dirname(filePath),
-    `${path.basename(filePath, path.extname(filePath))}.webp`
-  );
+
+  const outputFileName = `${path.basename(
+    filePath,
+    path.extname(filePath)
+  )}-converted.webp`;
+  const outputFilePath = path.join(path.dirname(filePath), outputFileName);
 
   sharp(filePath)
     .resize({
@@ -29,16 +31,13 @@ const sharpMiddleware = (req, res, next) => {
       // Supprimer l'ancienne image si elle existe
       fs.unlink(filePath, (unlinkErr) => {
         if (unlinkErr) {
-          console.error(
-            "Erreur lors de la suppression de l'ancienne image",
-            unlinkErr
-          );
+          console.error(unlinkErr);
         }
       });
 
       // Mise à jour du chemin du fichier dans l'objet `req.file`
       req.file.path = outputFilePath;
-      req.file.filename = path.basename(outputFilePath);
+      req.file.filename = outputFileName;
 
       next();
     });
