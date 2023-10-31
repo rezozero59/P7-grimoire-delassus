@@ -6,7 +6,7 @@ module.exports = (req, res, next) => {
     const token = req.headers.authorization.split(" ")[1];
 
     // Vérifie le token
-    const decodedToken = jwt.verify(token, "RANDOM_TOKEN_SECRET"); // Utilise la même clé secrète que lors de la signature du token
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY); // Utilise la même clé secrète que lors de la signature du token
     req.user = { userId: decodedToken.userId }; // Stocker l'ID de l'utilisateur dans la requête pour un accès ultérieur
 
     next();

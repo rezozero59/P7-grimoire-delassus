@@ -6,6 +6,21 @@ exports.createUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Validation de l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Email non valide" });
+    }
+
+    // Vérification de la complexité du mot de passe
+    const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message:
+          "Le mot de passe doit contenir au moins 8 caractères, dont des chiffres, des lettres majuscules et minuscules.",
+      });
+    }
+
     // Vérifie si l'utilisateur existe déjà
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -47,11 +62,9 @@ exports.loginUser = async (req, res) => {
     }
 
     // Crée un token JWT
-    const token = jwt.sign(
-      { userId: user._id },
-      "RANDOM_TOKEN_SECRET", // Remplacer par une clé secrète robuste
-      { expiresIn: "24h" }
-    );
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "24h",
+    });
 
     res.status(200).json({ userId: user._id, token });
   } catch (error) {

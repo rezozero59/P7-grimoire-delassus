@@ -8,10 +8,10 @@ const authRoutes = require("./routes/auth");
 const bookRoutes = require("./routes/books");
 
 mongoose
-  .connect(
-    `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@grimoire.cafkgzn.mongodb.net/?retryWrites=true&w=majority`,
-    { useNewUrlParser: true, useUnifiedTopology: true }
-  )
+  .connect(process.env.MONGODB_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("Connexion à MongoDB réussie !"))
   .catch(() => console.log("Connexion à MongoDB échouée !"));
 
