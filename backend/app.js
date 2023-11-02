@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const authRoutes = require("./routes/auth");
 const bookRoutes = require("./routes/books");
 
+// Connexion à la base de données MongoDB
 mongoose
   .connect(process.env.MONGODB_URL, {
     useNewUrlParser: true,
@@ -18,6 +19,7 @@ mongoose
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Middleware pour gérer les accès CORS
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
@@ -31,6 +33,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// Middleware pour gérer les images de manière statique
 app.use("/images", express.static(path.join(__dirname, "images")));
 
 app.use("/api/auth", authRoutes);

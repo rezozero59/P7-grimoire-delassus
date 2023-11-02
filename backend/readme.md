@@ -14,11 +14,14 @@ Node.js, npm.
 
 ## Installation et lancement du serveur
 
-git clone https://github.com/rezozero59/P7-grimoire-delassus.git
+1. Clonez le dépôt:
+   git clone https://github.com/rezozero59/P7-grimoire-delassus.git
 
-npm install
+2. Installez les dépendances :
+   npm install
 
-npm start / nodemon server
+3. Lancez le serveur :
+   npm start / nodemon server
 
 ## Accès à la base de données
 
@@ -26,10 +29,11 @@ Pour accéder à la base de données, il faut créer un fichier .env à la racin
 
 MONGODB_URL=mongodb+srv://<username>:<password>@grimoire.cafkgzn.mongodb.net/?retryWrites=true&w=majority
 
-Pour le test, vous pouvez utiliser les identifiants suivants :
-<username>=oc-user-test
-<password>=JOpGvOP7KlGdWXTB
+Pour le test, vous pouvez utiliser les identifiants fournis par email.
+Les détails pour accéder à la base de données et d'autres informations sensibles seront fournis séparément pour des raisons de sécurité.
 
-Un exemple pour la clé secrète que lors de la signature du token
+Un exemple pour la clé secrète lors de la signature du token:
 
 <JWT_SECRET_KEY> = Shqs433jd25d!qs@jd
+
+Remarque : Ne partagez jamais vos identifiants de base de données et vos clés secrètes publiquement.

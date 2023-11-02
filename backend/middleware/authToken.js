@@ -11,6 +11,6 @@ module.exports = (req, res, next) => {
 
     next();
   } catch {
-    res.status(403).json({ error: error.message });
+    res.status(403).json({ error: "unauthorized request" });
   }
 };
